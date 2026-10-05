@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jaipur Auto Hub</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#171717}
+header{background:#111827;color:#fff;padding:22px 6%;display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0}.cart{background:#fbbf24;border:0;border-radius:8px;padding:11px 16px;font-weight:700}
+.hero{background:#1f2937;color:#fff;padding:55px 6%}.hero h2{font-size:40px;margin:0 0 10px}.hero p{max-width:600px;line-height:1.6}
+.wrap{padding:30px 6%}.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.card,.panel{background:#fff;border-radius:12px;padding:18px;box-shadow:0 3px 14px #00000012}
+.picture{height:125px;border-radius:9px;background:#eef0f3;display:flex;align-items:center;justify-content:center;font-size:60px}
+.price{font-size:21px;font-weight:700}.add,.submit{width:100%;padding:12px;border:0;border-radius:7px;margin-top:10px;font-weight:700}
+.add{background:#111827;color:#fff}.submit{background:#16a34a;color:#fff}
+input,textarea{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccc;border-radius:7px;font:inherit}
+.panel{margin-top:25px}.hidden{display:none}.message{padding:12px;border-radius:8px;margin-top:15px}
+footer{background:#111827;color:#fff;padding:25px 6%;margin-top:30px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🚘 Jaipur Auto Hub</h1><div>Car accessories • Jaipur delivery</div></div>
+  <button class="cart" onclick="showCart()">🛒 Cart (<span id="count">0</span>)</button>
+</header>
+
+<section class="hero">
+  <h2>Upgrade Your Drive.</h2>
+  <p>Useful car accessories with Cash on Delivery. We deliver in Jaipur only.</p>
+</section>
+
+<main class="wrap">
+<h2>Shop Accessories</h2>
+<div class="products" id="products"></div>
+
+<section class="panel hidden" id="cartPanel">
+<h2>Your Cart</h2><div id="cartItems"></div>
+<h3>Total: ₹<span id="total">0</span></h3>
+</section>
+
+<section class="panel">
+<h2>Checkout</h2>
+<form id="orderForm">
+<label>Full name</label>
+<input id="customerName" required maxlength="100">
+<label>Phone number</label>
+<input id="phone" type="tel" required maxlength="15">
+<label>Delivery address in Jaipur</label>
+<textarea id="address" required maxlength="500"></textarea>
+<p><strong>Payment: Cash on Delivery</strong></p>
+<button class="submit" type="submit">Place COD Order</button>
+</form>
+<div id="message"></div>
+</section>
+
+<section class="panel">
+<h2>How We Started</h2>
+<p>Jaipur Auto Hub started with a simple idea: make useful car accessories easier to discover and order locally in Jaipur.</p>
+</section>
+</main>
+
+<footer>
+<strong>Jaipur Auto Hub</strong>
+<p>Jaipur, Rajasthan • Cash on Delivery</p>
+<p>Contact: agastya20146@gmail.com</p>
+</footer>
+
+<script>
+/*
+IMPORTANT:
+After deploying Google Apps Script, replace the URL below with your
+Web App URL ending in /exec.
+*/
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw52X4dHTrzuiJOQ4-dBfx4A6ZIWIZyseZXo0rh8KD0dgujPFtsAFwETK4JKeUtkcf3/exec";
+
+const products=[
+{id:1,name:"Fuzzy Dice",price:420,icon:"🎲",desc:"Fun hanging car decoration."},
+{id:2,name:"Phone Holder",price:450,icon:"📱",desc:"Keep your phone secure and visible."},
+{id:3,name:"Microfiber Cloth",price:400,icon:"🧽",desc:"Soft cloth for quick car cleaning."},
+{id:4,name:"Car Air Freshener",price:400,icon:"🌸",desc:"Freshen up your car interior."},
+{id:5,name:"Tissue Holder",price:440,icon:"🧻",desc:"Keep tissues neat and easy to reach."},
+{id:6,name:"Keychains",price:400,icon:"🚗",desc:"Simple car-themed keychains."},
+{id:7,name:"Mini Cleaning Brush",price:395,icon:"🧹",desc:"Clean small interior spaces and gaps."}
+];
+
+let cart=[];
+
+function renderProducts(){
+ document.getElementById("products").innerHTML=products.map(p=>`
+ <article class="card">
+  <div class="picture">${p.icon}</div>
+  <h3>${p.name}</h3><p>${p.desc}</p>
+  <div class="price">₹${p.price}</div>
+  <button class="add" onclick="addToCart(${p.id})">Add to Cart</button>
+ </article>`).join("");
+}
+
+function addToCart(id){
+ const p=products.find(x=>x.id===id);
+ const existing=cart.find(x=>x.id===id);
+ if(existing) existing.quantity++;
+ else cart.push({...p,quantity:1});
+ updateCart();
+}
+
+function removeItem(id){
+ cart=cart.filter(x=>x.id!==id); updateCart();
+}
+
+function updateCart(){
+ document.getElementById("count").textContent=cart.reduce((s,x)=>s+x.quantity,0);
+ document.getElementById("cartItems").innerHTML=cart.length?cart.map(x=>
+ `<p>${x.name} × ${x.quantity} — ₹${x.price*x.quantity}
+ <button onclick="removeItem(${x.id})">Remove</button></p>`).join(""):"Your cart is empty.";
+ document.getElementById("total").textContent=cart.reduce((s,x)=>s+x.price*x.quantity,0);
+}
+
+function showCart(){
+ document.getElementById("cartPanel").classList.remove("hidden");
+ document.getElementById("cartPanel").scrollIntoView({behavior:"smooth"});
+}
+
+document.getElementById("orderForm").addEventListener("submit",async function(e){
+ e.preventDefault();
+ const message=document.getElementById("message");
+
+ if(cart.length===0){
+  message.textContent="Please add a product to your cart first.";
+  return;
+ }
+
+ if(APPS_SCRIPT_URL==="PASTE_YOUR_WEB_APP_URL_HERE"){
+  message.textContent="The store email connection still needs your Apps Script Web App URL.";
+  return;
+ }
+
+ const order={
+  orderId:"JAH-"+Date.now(),
+  customerName:document.getElementById("customerName").value.trim(),
+  phone:document.getElementById("phone").value.trim(),
+  address:document.getElementById("address").value.trim(),
+  city:"Jaipur",
+  payment:"Cash on Delivery",
+  items:cart.map(x=>({name:x.name,price:x.price,quantity:x.quantity})),
+  total:cart.reduce((s,x)=>s+x.price*x.quantity,0)
+ };
+
+ message.textContent="Sending order...";
+
+ try{
+  const response=await fetch(APPS_SCRIPT_URL,{
+   method:"POST",
+   headers:{"Content-Type":"text/plain;charset=utf-8"},
+   body:JSON.stringify(order),
+   redirect:"follow"
+  });
+
+  const result=await response.json();
+
+  if(!result.success) throw new Error(result.error||"Order failed");
+
+  message.className="message";
+  message.textContent="✅ Order received! We will contact you to confirm it.";
+  cart=[]; updateCart(); this.reset();
+ }catch(err){
+  console.error(err);
+  message.className="message";
+  message.textContent="❌ Order could not be sent. Check the Apps Script URL and deployment.";
+ }
+});
+
+renderProducts();updateCart();
+</script>
+</body>
+</html>
